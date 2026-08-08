@@ -9,7 +9,12 @@ import type { IncomingMessage } from 'node:http';
 import type { Duplex } from 'node:stream';
 import { WebSocketServer, type WebSocket } from 'ws';
 import { WS_PATH } from '../lib/literature/protocol';
-import { disconnect, handle, sweep, type Connection, type Session } from './rooms';
+import { scheduleBots } from './bots';
+import { disconnect, handle, setRoomListener, sweep, type Connection, type Session } from './rooms';
+
+/* Wired here rather than inside rooms.ts, so the room registry has no dependency on bots and
+   the two can be reasoned about separately. */
+setRoomListener(scheduleBots);
 
 export { WS_PATH };
 

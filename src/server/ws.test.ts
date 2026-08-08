@@ -227,6 +227,39 @@ describe('transport', () => {
 		host.close();
 	});
 
+	test('bots take their turns without being prompted', async () => {
+		const host = await Client.open();
+		host.send({ t: 'create', ...HELLO, name: 'Josh' });
+		await host.wait('welcome');
+		await host.wait('room');
+		for (let i = 0; i < 3; i++) {
+			host.send({ t: 'addBot' });
+			await host.wait('room');
+		}
+		host.send({ t: 'start' });
+		let view = (await host.wait('room')).view;
+
+		/* Play the human's own turns until the table hands over to a bot. A hit keeps the turn,
+		   so this may take a few asks. */
+		for (let i = 0; i < 20 && view.game?.yourTurn; i++) {
+			const card = view.game.askableCards[0];
+			const target = view.game.askableTargets[0];
+			if (card === undefined || target === undefined) break;
+			host.send({ t: 'ask', target, card });
+			view = (await host.wait('room')).view;
+		}
+		expect(view.game?.yourTurn).toBe(false);
+
+		/* Nobody asked it to move — the server schedules bots off its own broadcasts. Bots
+		   think for up to 1.5s, so allow for a couple of moves. */
+		const before = view.game!.move;
+		const after = (await host.wait('room', 8000)).view;
+		expect(after.game!.move).toBeGreaterThan(before);
+		expect(after.game!.lastMove).not.toBeNull();
+
+		host.close();
+	});
+
 	test('refuses to start a half-empty table', async () => {
 		const host = await Client.open();
 		host.send({ t: 'create', ...HELLO, name: 'Josh' });

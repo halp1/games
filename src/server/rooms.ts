@@ -513,6 +513,48 @@ export function sweep(now = Date.now()): void {
 	}
 }
 
+/* ---------------------------------------------------------------- bot seam */
+
+/**
+ * Whose move the game is waiting on, or null when it is waiting on nobody. Phase and turn
+ * are public information — every player can see whose move it is — so exposing this leaks
+ * nothing that is not already on the wire.
+ */
+export function actingSeat(room: Room): SeatId | null {
+	const game = room.game;
+	if (!game) return null;
+	switch (game.phase.kind) {
+		case 'playing':
+			return game.turn;
+		case 'awaiting_handoff':
+			return game.phase.seat;
+		case 'choosing_final_declarer':
+			return game.phase.chooser;
+		case 'final_declarations':
+			return game.phase.declarer;
+		case 'over':
+			return null;
+	}
+}
+
+export function isBotSeat(room: Room, seat: SeatId): boolean {
+	return room.seats[seat]?.isBot === true;
+}
+
+export function isPaused(room: Room): boolean {
+	return pausedSeat(room) !== null;
+}
+
+/**
+ * The redacted view for a seat — the same one a human at that seat receives. This is how
+ * bots see the game, and it is the only way they can: they get no privileged access to room
+ * state, so "a bot cannot see more than you can" is a property of the wiring, not a promise.
+ */
+export function playerViewFor(room: Room, seat: SeatId) {
+	if (!room.game) return null;
+	return toPlayerView(room.game, seat, metaOf(room));
+}
+
 /** Test seam. */
 export function roomCount(): number {
 	return rooms.size;

@@ -56,7 +56,7 @@
 			<label for="name" class="mb-1 block font-mono text-xs tracking-[0.14em] text-muted uppercase">
 				Your name
 			</label>
-			<Input id="name" bind:value={name} maxlength={MAX_NAME_LENGTH} placeholder="e.g. Josh" />
+			<Input id="name" bind:value={name} maxlength={MAX_NAME_LENGTH} placeholder="e.g. Player" />
 		</div>
 
 		<div class="grid grid-cols-2 gap-2">
