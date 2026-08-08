@@ -10,7 +10,11 @@
 		"skipLibCheck": true,
 		"sourceMap": true,
 		"strict": true,
-		"moduleResolution": "bundler"
+		"moduleResolution": "bundler",
+		// SvelteKit generates "types": ["node"], and an extending config replaces that array
+		// rather than merging into it — so "node" has to be repeated here to keep it.
+		// "bun" is what makes `bun:test` resolve in the rules engine's tests.
+		"types": ["node", "bun"]
 	}
 	// Path aliases are handled by https://svelte.dev/docs/kit/configuration#alias
 	// except $lib which is handled by https://svelte.dev/docs/kit/configuration#files
