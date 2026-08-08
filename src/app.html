@@ -2,7 +2,10 @@
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- viewport-fit=cover lets the game dock its action bar to the bottom edge and pad
+		     itself with env(safe-area-inset-bottom); without it the bar sits under the iPhone
+		     home indicator. No effect on pages that never read the inset. -->
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="color-scheme" content="dark" />
 		<meta name="theme-color" content="#0e0e0e" />
 		<meta name="description" content="A small collection of fast, offline-capable browser games." />

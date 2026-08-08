@@ -106,6 +106,16 @@
 	--color-muted: #666666;
 	--color-input-bg: #111111;
 	--color-text-inverted: #0e0e0e;
+	/* Cards need a red, and two teams need telling apart — neither of which the base palette
+	   covers. Both reuse existing semantic values rather than introducing new hues: the
+	   danger red and the info tint. Team colour is relative, never absolute: your side is
+	   always accent, theirs is always rival, which reads far faster on a phone than a fixed
+	   A/B mapping you have to remember which way round you are. */
+	--color-suit-red: #ff6b6b;
+	--color-rival: #6ab4f5;
+	/* Same value as suit-red today, but a different idea: destructive actions. Named
+	   separately so one can change without dragging the other with it. */
+	--color-danger: #ff6b6b;
 	/* Tailwind's font namespace is --font-*, not --font-family-*: named the latter way
 	   these produce no `font-heading`/`font-mono` utilities at all, and every heading
 	   silently falls back to the body font. */
@@ -143,6 +153,12 @@ body {
 	min-height: 100vh;
 	min-height: 100dvh;
 	overflow-x: hidden;
+}
+
+/* Only where a game is on screen. A stray pull-to-refresh mid-hand is unrecoverable, but
+   disabling it site-wide would cost the gesture on ordinary pages for no reason. */
+body:has(.game-surface) {
+	overscroll-behavior: none;
 }
 
 button,

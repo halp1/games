@@ -12,4 +12,11 @@ export interface Game {
 	description: string;
 }
 
-export const games: Game[] = [];
+export const games: Game[] = [
+	{
+		slug: 'literature',
+		name: 'Literature',
+		description:
+			'Also called Fish. Two teams, one deck, no move log — ask for cards, remember everything, and declare a set before the other side does.'
+	}
+];
