@@ -5,20 +5,22 @@
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
-		"build": "vite build",
+		"build": "vite build && bun run build:server",
+		"build:server": "esbuild src/server/ws.ts --bundle --platform=node --format=esm --packages=external --outfile=build/ws.js",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"start": "node build",
+		"start": "node server.js",
 		"test": "bun test"
 	},
 	"dependencies": {
 		"@lucide/svelte": "^1.8.0",
 		"@number-flow/svelte": "^0.4.0",
-		"tailwind-merge": "^3.5.0"
+		"tailwind-merge": "^3.5.0",
+		"ws": "^8.21.3"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.4",
@@ -31,6 +33,8 @@
 		"@tailwindcss/vite": "^4.2.2",
 		"@types/bun": "^1.3.14",
 		"@types/node": "^24",
+		"@types/ws": "^8.18.1",
+		"esbuild": "^0.28.1",
 		"eslint": "^10.2.0",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.17.0",
