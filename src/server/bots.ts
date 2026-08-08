@@ -34,9 +34,15 @@ const MEMORY_MOVES = 10;
 /** A card visibly changing hands is a louder event than a question, and sticks around longer. */
 const HOLDS_MEMORY_MOVES = MEMORY_MOVES * 2;
 
-/** Long enough to read what just happened, short enough not to drag. */
-const THINK_MIN_MS = 800;
-const THINK_MAX_MS = 1500;
+/**
+ * Long enough to read what just happened, short enough not to drag. Read per move rather than
+ * at import, so an end-to-end test can play a whole game without waiting two minutes for it.
+ */
+function thinkingTime(): number {
+	const min = Number(process.env.LITERATURE_BOT_THINK_MIN_MS ?? 800);
+	const max = Number(process.env.LITERATURE_BOT_THINK_MAX_MS ?? 1500);
+	return min + Math.random() * Math.max(0, max - min);
+}
 
 export interface Memory {
 	/** Card → the seat last seen holding it, and the move that revealed it. */
@@ -299,13 +305,12 @@ export function scheduleBots(room: Room): void {
 	const seat = actingSeat(room);
 	if (seat === null || !isBotSeat(room, seat)) return;
 
-	const delay = THINK_MIN_MS + Math.random() * (THINK_MAX_MS - THINK_MIN_MS);
 	timers.set(
 		room,
 		setTimeout(() => {
 			timers.delete(room);
 			play(room, seat);
-		}, delay)
+		}, thinkingTime())
 	);
 }
 

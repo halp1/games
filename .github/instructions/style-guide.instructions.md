@@ -59,20 +59,50 @@ The monospace body font is the **default** — `font-family: "DM Mono", monospac
 | `--muted`    | `#666666` | Secondary text, placeholders, inactive icons                      |
 | `--input-bg` | `#111111` | Form input backgrounds                                            |
 
+**Game tokens** — also in the `@theme` block, so they carry Tailwind utilities
+(`text-suit-red`, `border-rival`, `hover:text-danger`) and never need a literal:
+
+| Token              | Value     | Role                                                  |
+| ------------------ | --------- | ----------------------------------------------------- |
+| `--color-suit-red` | `#ff6b6b` | Hearts, diamonds, the red joker                       |
+| `--color-rival`    | `#6ab4f5` | The opposing team                                     |
+| `--color-danger`   | `#ff6b6b` | Destructive actions — remove, disconnect, a lost card |
+
+`--suit-red` and `--danger` share a value but are separate ideas, so one can move without
+dragging the other along.
+
+**Team colour is relative, never absolute.** Your side is always `accent`, the opposition
+always `rival`. A fixed A/B mapping makes every player stop and work out which one they are.
+
 **Semantic one-off colors used in the codebase:**
 
-| Purpose           | Value     |
-| ----------------- | --------- |
-| Danger / delete   | `#ff6b6b` |
-| Error text/alert  | `#ff8080` |
-| Deploy / warning  | `#f0a830` |
-| File preview tint | `#6ab4f5` |
+| Purpose          | Value     |
+| ---------------- | --------- |
+| Error text/alert | `#ff8080` |
+| Deploy / warning | `#f0a830` |
+
+---
+
+### 1.2b Safe Areas
+
+`app.html` sets `viewport-fit=cover`. Anything docked to the bottom edge of the screen — a
+game's action bar, a sheet's footer — must add the inset itself, or it sits under the iPhone
+home indicator:
+
+```html
+<div style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"></div>
+```
+
+Ordinary pages that never read the inset are unaffected.
 
 ---
 
 ### 1.3 Global Background (`layout.css` baseline)
 
-This is the exact content of `src/routes/layout.css`. It must be imported once at the root layout:
+The baseline of `src/routes/layout.css`, imported once at the root layout. Illustrative rather
+than literal — the live file is the source of truth and additionally carries the self-hosted
+`@font-face` blocks, the game tokens above, `--color-text-inverted`, `dvh` heights, the
+`.card` / `.divider` helpers and the mobile tap rules:
 
 ```css
 @import 'tailwindcss';

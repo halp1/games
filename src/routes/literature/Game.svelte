@@ -9,6 +9,7 @@
 		type HalfSuitId
 	} from '$lib/literature/cards';
 	import type { Status } from '$lib/literature/client.svelte';
+	import { BUZZ, buzz, keepAwake, network } from '$lib/literature/feel.svelte';
 	import type { ClientMsg, RoomView } from '$lib/literature/protocol';
 	import type { Assignment, DeclareMode, SeatId } from '$lib/literature/rules';
 	import DeclareSheet from './DeclareSheet.svelte';
@@ -33,14 +34,29 @@
 	let declaring = $state(false);
 	let declareSet = $state<HalfSuitId | null>(null);
 
-	/* A snapshot arriving means the position moved on; any half-composed ask is now stale. */
+	/* A snapshot arriving means the position moved on; any half-composed ask is now stale.
+	   The same edge is where haptics fire, since it is exactly "something just happened". */
 	let lastMoveSeen = $state(-1);
+	let wasYourTurn = $state(false);
 	$effect(() => {
 		if (game.move === lastMoveSeen) return;
+		const first = lastMoveSeen === -1;
 		lastMoveSeen = game.move;
 		wanted = null;
 		target = null;
+
+		const move = game.lastMove;
+		/* Three moments only. Buzzing on every move would make a six-handed game unbearable. */
+		if (!first) {
+			if (move?.kind === 'declare') buzz(BUZZ.resolved);
+			else if (move?.kind === 'ask' && move.hit && move.target === game.you) buzz(BUZZ.lost);
+			else if (game.yourTurn && !wasYourTurn) buzz(BUZZ.turn);
+		}
+		wasYourTurn = game.yourTurn;
 	});
+
+	/* Someone else's long think should not put the screen to sleep mid-hand. */
+	keepAwake(() => game.phase.kind !== 'over' && !view.paused);
 
 	const askable = $derived(new Set(game.askableCards));
 
@@ -110,7 +126,9 @@
 
 <!-- Fixed to the viewport minus the h-10 shell header. Only the hand scrolls; the page
      itself never does, which is most of what makes this feel like an app and not a document. -->
-<div class="game-surface flex h-[calc(100dvh-2.5rem)] flex-col overflow-hidden">
+<div
+	class="game-surface mx-auto flex h-[calc(100dvh-2.5rem)] w-full max-w-3xl flex-col overflow-hidden"
+>
 	<SetStrip
 		{game}
 		onpick={game.canDeclare
@@ -125,51 +143,55 @@
 
 	<!-- The last move, and only the last move. It is replaced by the next one and never
 	     recorded — remembering it is the game. -->
-	<div class="flex min-h-14 shrink-0 items-center border-b border-border px-3 py-2">
-		{#if view.paused}
-			<p class="text-sm text-danger">Waiting for {view.paused.name} to reconnect…</p>
-		{:else if over}
-			<p class="text-sm text-accent">
-				{game.winner === game.yourTeam ? 'Your team wins' : 'The other team wins'}
-				· {game.scores[game.yourTeam]}–{game.scores[game.yourTeam === 0 ? 1 : 0]}
-			</p>
-		{:else if game.lastMove?.kind === 'ask'}
-			{@const move = game.lastMove}
-			<p class="text-sm text-muted">
-				<span class="text-text">{game.seats[move.asker].name}</span>
-				asked
-				<span class="text-text">{game.seats[move.target].name}</span>
-				for
-				<span class="font-mono text-text">{cardLabel(move.card)}</span>
-				·
-				<span class={move.hit ? 'text-accent' : 'text-danger'}>{move.hit ? 'GOT IT' : 'NO'}</span>
-			</p>
-		{:else if game.lastMove?.kind === 'declare'}
-			{@const move = game.lastMove}
-			<p class="text-sm text-muted">
-				<span class="text-text">{game.seats[move.declarer].name}</span>
-				declared
-				<span class="text-text">{halfSuitLabel(move.set)}</span>
-				·
-				<span class={move.scoringTeam === game.yourTeam ? 'text-accent' : 'text-rival'}>
-					{move.success ? 'CORRECT' : 'WRONG'} — {move.scoringTeam === game.yourTeam
-						? 'us'
-						: 'them'}
-				</span>
-			</p>
-		{:else if game.lastMove?.kind === 'handoff'}
-			{@const move = game.lastMove}
-			<p class="text-sm text-muted">
-				<span class="text-text">{game.seats[move.from].name}</span>
-				passed the turn to
-				<span class="text-text">{game.seats[move.to].name}</span>
-			</p>
-		{:else}
-			<p class="text-sm tracking-widest text-border uppercase">
-				{game.size / 2} v {game.size / 2} · 9 sets · 5 to win
-			</p>
-		{/if}
-	</div>
+	{#key game.move}
+		<div
+			class="flex min-h-14 shrink-0 animate-[fadeUp_0.15s_ease_both] items-center border-b border-border px-3 py-2"
+		>
+			{#if view.paused}
+				<p class="text-sm text-danger">Waiting for {view.paused.name} to reconnect…</p>
+			{:else if over}
+				<p class="text-sm text-accent">
+					{game.winner === game.yourTeam ? 'Your team wins' : 'The other team wins'}
+					· {game.scores[game.yourTeam]}–{game.scores[game.yourTeam === 0 ? 1 : 0]}
+				</p>
+			{:else if game.lastMove?.kind === 'ask'}
+				{@const move = game.lastMove}
+				<p class="text-sm text-muted">
+					<span class="text-text">{game.seats[move.asker].name}</span>
+					asked
+					<span class="text-text">{game.seats[move.target].name}</span>
+					for
+					<span class="font-mono text-text">{cardLabel(move.card)}</span>
+					·
+					<span class={move.hit ? 'text-accent' : 'text-danger'}>{move.hit ? 'GOT IT' : 'NO'}</span>
+				</p>
+			{:else if game.lastMove?.kind === 'declare'}
+				{@const move = game.lastMove}
+				<p class="text-sm text-muted">
+					<span class="text-text">{game.seats[move.declarer].name}</span>
+					declared
+					<span class="text-text">{halfSuitLabel(move.set)}</span>
+					·
+					<span class={move.scoringTeam === game.yourTeam ? 'text-accent' : 'text-rival'}>
+						{move.success ? 'CORRECT' : 'WRONG'} — {move.scoringTeam === game.yourTeam
+							? 'us'
+							: 'them'}
+					</span>
+				</p>
+			{:else if game.lastMove?.kind === 'handoff'}
+				{@const move = game.lastMove}
+				<p class="text-sm text-muted">
+					<span class="text-text">{game.seats[move.from].name}</span>
+					passed the turn to
+					<span class="text-text">{game.seats[move.to].name}</span>
+				</p>
+			{:else}
+				<p class="text-sm tracking-widest text-border uppercase">
+					{game.size / 2} v {game.size / 2} · 9 sets · 5 to win
+				</p>
+			{/if}
+		</div>
+	{/key}
 
 	<div class="min-h-0 flex-1 overflow-y-auto p-2">
 		{#if handoff.length}
@@ -200,7 +222,9 @@
 
 		{#each rows as row (row.set)}
 			<div class="mb-2 flex items-center gap-2">
-				<span class="w-12 shrink-0 text-[0.65rem] tracking-[0.08em] text-muted uppercase">
+				<span
+					class="w-12 shrink-0 text-[0.65rem] tracking-[0.08em] text-muted uppercase sm:w-16 sm:text-xs"
+				>
 					{halfSuitLabel(row.set)}
 				</span>
 				<div class="flex min-w-0 flex-1 gap-1">
@@ -240,7 +264,11 @@
 		{#if error}
 			<p class="mb-2 px-1 text-xs text-[#ff8080]">{error}</p>
 		{/if}
-		{#if status !== 'open'}
+		{#if !network.online}
+			<p class="mb-2 px-1 text-xs tracking-widest text-danger uppercase">
+				Offline — your seat is held
+			</p>
+		{:else if status !== 'open'}
 			<p class="mb-2 px-1 text-xs tracking-widest text-border uppercase">Reconnecting…</p>
 		{/if}
 

@@ -5,6 +5,7 @@
 	import { Button } from '$lib/components';
 	import type { TableSize } from '$lib/literature/cards';
 	import { Table, storedName } from '$lib/literature/client.svelte';
+	import { network, watchNetwork } from '$lib/literature/feel.svelte';
 	import type { ClientMsg } from '$lib/literature/protocol';
 	import Game from './Game.svelte';
 	import Landing from './Landing.svelte';
@@ -21,6 +22,8 @@
 
 	const table = new Table();
 	let name = $state(storedName());
+
+	watchNetwork();
 
 	onDestroy(() => table.stop());
 
@@ -65,7 +68,11 @@
 {:else if !table.view}
 	<Landing code={codeFromUrl} bind:name onCreate={create} onJoin={join} />
 
-	{#if table.status === 'connecting' || table.status === 'reconnecting'}
+	{#if !network.online}
+		<p class="pb-8 text-center text-sm tracking-widest text-danger uppercase">
+			Offline — Literature needs a connection
+		</p>
+	{:else if table.status === 'connecting' || table.status === 'reconnecting'}
 		<p class="pb-8 text-center text-sm tracking-widest text-border uppercase">Connecting…</p>
 	{/if}
 	{#if table.error}
