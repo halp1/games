@@ -24,6 +24,20 @@ const RETRY_MAX_MS = 8_000;
 export const NAME_KEY = 'literature:name';
 const tokenKey = (room: string) => `literature:token:${room}`;
 
+/**
+ * Seat tokens live in **sessionStorage**, which is per-tab; the remembered name lives in
+ * localStorage, which is shared.
+ *
+ * That split is the whole point. A token is an identity claim on a seat, and localStorage is
+ * shared by every tab on the origin — so two tabs would present the same token and fight over
+ * one seat. sessionStorage survives a reload and a backgrounded phone, which is what
+ * reconnecting actually needs, while giving each tab an identity of its own.
+ *
+ * The cost is that closing a tab mid-game loses the seat for good. The host can end the game
+ * from the pause overlay when that happens.
+ */
+const seatStore = () => (browser ? sessionStorage : null);
+
 export type Status = 'idle' | 'connecting' | 'open' | 'reconnecting';
 
 /** What to (re)send once the socket opens. Survives reconnects; that is the point. */
@@ -151,14 +165,14 @@ export class Table {
 			v: PROTOCOL_VERSION,
 			name: intent.name,
 			room: intent.room,
-			token: localStorage.getItem(tokenKey(intent.room)) ?? undefined
+			token: seatStore()?.getItem(tokenKey(intent.room)) ?? undefined
 		});
 	}
 
 	#receive(msg: ServerMsg): void {
 		switch (msg.t) {
 			case 'welcome':
-				localStorage.setItem(tokenKey(msg.room), msg.token);
+				seatStore()?.setItem(tokenKey(msg.room), msg.token);
 				/* Reconnects must re-join rather than re-create, or a dropped host would spawn a
 				   new room on every blip and strand everybody in the old one. */
 				this.#intent = { kind: 'join', name: this.#intent?.name ?? '', room: msg.room };
@@ -175,7 +189,7 @@ export class Table {
 				this.error = describe(msg.code, msg.message);
 				if (msg.code === 'ROOM_NOT_FOUND' || msg.code === 'GAME_IN_PROGRESS') {
 					/* Nothing to reconnect to — a deploy wiped the room, or it filled without us. */
-					if (this.#intent?.kind === 'join') localStorage.removeItem(tokenKey(this.#intent.room));
+					if (this.#intent?.kind === 'join') seatStore()?.removeItem(tokenKey(this.#intent.room));
 					this.lost = true;
 					this.stop();
 				}

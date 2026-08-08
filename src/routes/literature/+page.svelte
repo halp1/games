@@ -3,6 +3,7 @@
 	import { browser } from '$app/environment';
 	import { page } from '$app/state';
 	import { Button } from '$lib/components';
+	import { setConnection } from '$lib/connection.svelte';
 	import type { TableSize } from '$lib/literature/cards';
 	import { Table, storedName } from '$lib/literature/client.svelte';
 	import { network, watchNetwork } from '$lib/literature/feel.svelte';
@@ -24,6 +25,16 @@
 	let name = $state(storedName());
 
 	watchNetwork();
+
+	/* Publishes to the shell's header indicator. Offline outranks the socket's own view of
+	   things: a dropped radio reads as "reconnecting" forever otherwise, which tells nobody
+	   the actual problem. */
+	$effect(() => {
+		if (table.status === 'idle') return setConnection(null);
+		setConnection(!network.online ? 'offline' : table.status);
+	});
+
+	onDestroy(() => setConnection(null));
 
 	onDestroy(() => table.stop());
 

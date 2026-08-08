@@ -3,6 +3,12 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { ArrowLeft } from '@lucide/svelte';
+	import {
+		CONNECTION_LABEL,
+		CONNECTION_TEXT,
+		CONNECTION_TONE,
+		connection
+	} from '$lib/connection.svelte';
 
 	let { children } = $props();
 
@@ -31,6 +37,25 @@
 		>
 			HALP/GAMES
 		</a>
+
+		<!-- Only games holding a live connection set this; everything else leaves the header
+		     exactly as it was. A bare logo leaves plenty of room, so the label shows at every
+		     width — a lone dot makes people guess. -->
+		{#if connection.status}
+			{@const status = connection.status}
+			<span
+				class="ml-auto flex shrink-0 items-center gap-1.5"
+				role="status"
+				aria-label="Connection: {CONNECTION_LABEL[status]}"
+			>
+				<span
+					class="h-1.5 w-1.5 shrink-0 {CONNECTION_TONE[status]} {status === 'open' ? '' : 'pulse'}"
+				></span>
+				<span class="text-[0.65rem] tracking-[0.12em] uppercase {CONNECTION_TEXT[status]}">
+					{CONNECTION_LABEL[status]}
+				</span>
+			</span>
+		{/if}
 	</header>
 	<main class="relative z-1 flex flex-1 flex-col">
 		{@render children()}

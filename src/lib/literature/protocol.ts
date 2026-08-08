@@ -36,6 +36,8 @@ export type ClientMsg =
 	| { t: 'removeSeat'; seat: SeatId }
 	| { t: 'start' }
 	| { t: 'rematch' }
+	/** Ends a game in progress and returns everyone to the lobby. Host only. */
+	| { t: 'abandon' }
 	/* In play. */
 	| { t: 'ask'; target: SeatId; card: CardId }
 	| { t: 'declare'; set: HalfSuitId; mode: DeclareMode; assign: Assignment }

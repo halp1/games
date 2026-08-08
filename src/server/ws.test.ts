@@ -148,6 +148,100 @@ describe('transport', () => {
 		guest.close();
 	});
 
+	test('a second tab presenting the same token gets its own seat', async () => {
+		/* Browser tabs share localStorage, so two tabs on one machine can present the same
+		   token. Handing the seat over would kick the first tab, which reconnects and kicks the
+		   second, and so on — the table appears to have one player forever. */
+		const host = await Client.open();
+		host.send({ t: 'create', ...HELLO, name: 'Josh' });
+		const opened = await host.wait('welcome');
+		await host.wait('room');
+
+		const second = await Client.open();
+		second.send({
+			t: 'join',
+			v: PROTOCOL_VERSION,
+			name: 'Amrita',
+			room: opened.room,
+			token: opened.token
+		});
+
+		const welcome = await second.wait('welcome');
+		expect(welcome.seat).toBe(1);
+		expect(welcome.token).not.toBe(opened.token);
+
+		/* And the first tab is still connected and still holds seat 0. */
+		const view = (await host.wait('room')).view;
+		expect(view.seats[0]).toMatchObject({ name: 'Josh', connected: true, isHost: true });
+		expect(view.seats[1]).toMatchObject({ name: 'Amrita', connected: true });
+
+		host.close();
+		second.close();
+	});
+
+	test('mid-game a token still reclaims its seat, live socket or not', async () => {
+		/* The lobby rule above must not apply once play starts: there is no spare seat to hand
+		   out, and the token is the only identity a returning player has. */
+		const host = await Client.open();
+		host.send({ t: 'create', ...HELLO, name: 'Josh' });
+		const opened = await host.wait('welcome');
+		await host.wait('room');
+		for (let i = 0; i < 3; i++) {
+			host.send({ t: 'addBot' });
+			await host.wait('room');
+		}
+		host.send({ t: 'start' });
+		await host.wait('room');
+
+		const returning = await Client.open();
+		returning.send({
+			t: 'join',
+			v: PROTOCOL_VERSION,
+			name: 'Josh',
+			room: opened.room,
+			token: opened.token
+		});
+		const welcome = await returning.wait('welcome');
+		expect(welcome.seat).toBe(0);
+		expect((await returning.wait('room')).view.game).not.toBeNull();
+
+		returning.close();
+		host.close();
+	});
+
+	test('the host can end a game nobody can resume', async () => {
+		const host = await Client.open();
+		host.send({ t: 'create', ...HELLO, name: 'Josh' });
+		const code = (await host.wait('welcome')).room;
+		await host.wait('room');
+
+		const guest = await Client.open();
+		guest.send({ t: 'join', v: PROTOCOL_VERSION, name: 'Amrita', room: code });
+		await guest.wait('welcome');
+		await guest.wait('room');
+		await host.wait('room');
+
+		host.send({ t: 'addBot' });
+		await host.wait('room');
+		host.send({ t: 'addBot' });
+		await host.wait('room');
+		host.send({ t: 'start' });
+		await host.wait('room');
+
+		/* Amrita closes her tab; with per-tab tokens her seat can never be reclaimed. */
+		guest.close();
+		expect((await host.wait('room')).view.paused?.name).toBe('Amrita');
+
+		host.send({ t: 'abandon' });
+		const view = (await host.wait('room')).view;
+		expect(view.stage).toBe('lobby');
+		expect(view.paused).toBeNull();
+		/* Her seat is freed, so the lobby is usable again rather than stuck at "full". */
+		expect(view.seats[1].filled).toBe(false);
+
+		host.close();
+	});
+
 	test('rejects an unknown room', async () => {
 		const client = await Client.open();
 		client.send({ t: 'join', v: PROTOCOL_VERSION, name: 'Josh', room: 'ZZZZ' });

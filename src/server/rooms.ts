@@ -246,9 +246,15 @@ function join(session: Session, msg: Extract<ClientMsg, { t: 'join' }>): void {
 
 	leave(session);
 
-	/* Reclaiming a held seat: the token is the only thing that proves it is yours. */
+	/* Reclaiming a held seat: the token is the only thing that proves it is yours.
+
+	   But a live socket already on that seat means this is not the same player coming back —
+	   it is a second browser tab, which shares storage with the first. Handing the seat over
+	   would kick tab one, which reconnects and kicks tab two, and the table looks like it has
+	   a single player forever. Mid-game is the exception: there is no spare seat to offer and
+	   the token is the only identity anyone has, so a reconnect always wins. */
 	const held = seatOf(room, msg.token ?? null);
-	if (held >= 0) {
+	if (held >= 0 && (room.game !== null || room.seats[held]?.session == null)) {
 		attach(session, room, held);
 		broadcast(room);
 		return;
@@ -445,6 +451,20 @@ export function handle(session: Session, raw: unknown): void {
 			if (room.hostToken !== session.token) return fail(session, 'NOT_HOST');
 			if (!room.game || room.game.phase.kind !== 'over') return fail(session, 'BAD_MESSAGE');
 			room.game = null;
+			return broadcast(room);
+		}
+
+		/* The way out of a game that cannot continue — someone closed their tab, so their seat
+		   is reserved for a token that no longer exists anywhere and play is paused for good. */
+		case 'abandon': {
+			if (room.hostToken !== session.token) return fail(session, 'NOT_HOST');
+			if (!room.game) return fail(session, 'BAD_MESSAGE');
+			room.game = null;
+			/* Seats held only by a vanished player are freed, so the lobby is usable again. */
+			for (let index = 0; index < room.size; index++) {
+				const player = room.seats[index];
+				if (player && !player.isBot && !player.session) room.seats[index] = null;
+			}
 			return broadcast(room);
 		}
 

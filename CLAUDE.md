@@ -41,6 +41,12 @@ production all call that one function, so there is no deploy-only code path.
   `await` inside one silently reopens a race.
 - Rooms are in-memory, so a deploy ends any game in progress. Clients handle
   `ROOM_NOT_FOUND` by offering a new room.
+- **Seat tokens go in `sessionStorage`, never `localStorage`.** A token claims a seat, and
+  localStorage is shared by every tab on the origin — two tabs would present the same token
+  and fight over one seat, each kicking the other on reconnect. Shared _preferences_ (a
+  remembered name) still belong in localStorage.
+- A game holding a live connection should publish it via `$lib/connection.svelte` so the
+  shell renders the header status dot.
 - Production runs `server.js`, not adapter-node's `build/index.js`. pm2 learns that from the
   committed `ecosystem.config.cjs`, which `prod.sh` applies.
 

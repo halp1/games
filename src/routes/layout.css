@@ -116,6 +116,8 @@
 	/* Same value as suit-red today, but a different idea: destructive actions. Named
 	   separately so one can change without dragging the other with it. */
 	--color-danger: #ff6b6b;
+	/* In-between states — reconnecting, and anything else that is neither fine nor broken. */
+	--color-warning: #f0a830;
 	/* Tailwind's font namespace is --font-*, not --font-family-*: named the latter way
 	   these produce no `font-heading`/`font-mono` utilities at all, and every heading
 	   silently falls back to the body font. */
@@ -201,6 +203,21 @@ body::before {
 	to {
 		opacity: 1;
 		transform: translateY(0);
+	}
+}
+
+/* For a status dot that is mid-something. Opacity only, so it costs nothing to animate. */
+.pulse {
+	animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.25;
 	}
 }
 
