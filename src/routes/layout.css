@@ -1,0 +1,231 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@plugin '@tailwindcss/typography';
+
+/* Self-hosted so the app looks the same offline. These are the same latin and latin-ext
+   woff2 subsets Google Fonts serves; keeping the unicode-range means the ext file is
+   only fetched when a page actually uses those characters. */
+@font-face {
+	font-family: 'Anta';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/anta-400-latin.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Anta';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/anta-400-latin-ext.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'DM Mono';
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url('/fonts/dm-mono-300-latin.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'DM Mono';
+	font-style: normal;
+	font-weight: 300;
+	font-display: swap;
+	src: url('/fonts/dm-mono-300-latin-ext.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'DM Mono';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/dm-mono-400-latin.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'DM Mono';
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url('/fonts/dm-mono-400-latin-ext.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'DM Mono';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/dm-mono-500-latin.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'DM Mono';
+	font-style: normal;
+	font-weight: 500;
+	font-display: swap;
+	src: url('/fonts/dm-mono-500-latin-ext.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@theme {
+	--color-accent: #c8f56a;
+	--color-bg: #0e0e0e;
+	--color-surface: #161616;
+	--color-border: #2a2a2a;
+	--color-text: #f0ede6;
+	--color-muted: #666666;
+	--color-input-bg: #111111;
+	--color-text-inverted: #0e0e0e;
+	/* Tailwind's font namespace is --font-*, not --font-family-*: named the latter way
+	   these produce no `font-heading`/`font-mono` utilities at all, and every heading
+	   silently falls back to the body font. */
+	--font-heading: 'Anta', sans-serif;
+	--font-mono: 'DM Mono', monospace;
+}
+
+:root {
+	--bg: #0e0e0e;
+	--surface: #161616;
+	--border: #2a2a2a;
+	--accent: #c8f56a;
+	--text: #f0ede6;
+	--muted: #666666;
+	--input-bg: #111111;
+	/* --font-heading comes from @theme above, which emits it here too. */
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	/* Stop iOS Safari inflating text when the phone is rotated to landscape. */
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: 'DM Mono', monospace;
+	/* dvh tracks the collapsing mobile URL bar; vh does not. */
+	min-height: 100vh;
+	min-height: 100dvh;
+	overflow-x: hidden;
+}
+
+button,
+a,
+label,
+input,
+summary {
+	-webkit-tap-highlight-color: transparent;
+	/* Skips the 300ms double-tap-to-zoom delay on touch devices. */
+	touch-action: manipulation;
+}
+
+body::before {
+	content: '';
+	position: fixed;
+	inset: 0;
+	background-image:
+		linear-gradient(rgba(200, 245, 106, 0.03) 1px, transparent 1px),
+		linear-gradient(90deg, rgba(200, 245, 106, 0.03) 1px, transparent 1px);
+	background-size: 40px 40px;
+	pointer-events: none;
+	z-index: 0;
+}
+
+.spin {
+	animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@keyframes fadeUp {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes slide-in {
+	from {
+		opacity: 0;
+		transform: translateX(1rem);
+	}
+	to {
+		opacity: 1;
+		transform: translateX(0);
+	}
+}
+
+.card::before {
+	content: '';
+	position: absolute;
+	top: -1px;
+	right: -1px;
+	width: 32px;
+	height: 32px;
+	border-top: 2px solid var(--accent);
+	border-right: 2px solid var(--accent);
+}
+
+.divider::before,
+.divider::after {
+	content: '';
+	flex: 1;
+	height: 1px;
+	background: var(--color-border);
+}
+
+::-webkit-scrollbar {
+	width: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--border);
+}
+
+::-webkit-scrollbar-track {
+	background: transparent;
+}
